@@ -14,13 +14,9 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.use(cors({
-  origin: [
-    "http://localhost:5173",
-    "https://vite-project-h7tr.vercel.app"
-  ],
+  origin: process.env.FRONTEND_URL, // <<< PENTING
   credentials: true
 }));
-
 
 // ===== AUTH =====
 app.post("/register", authController.register);
@@ -39,6 +35,7 @@ app.get("/me", authMiddleware, (req, res) => {
 app.use("/users", userRoutes);
 
 // ===== START SERVER =====
-app.listen(process.env.PORT, () => {
-  console.log(`Server running on port ${process.env.PORT}`);
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
