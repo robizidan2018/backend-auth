@@ -1,0 +1,22 @@
+# ===== ENV =====
+.env
+
+# ===== NODE =====
+node_modules/
+
+# ===== LOGS =====
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ===== BUILD =====
+dist/
+build/
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+
+# ===== IDE =====
+.vscode/
+.idea/

@@ -13,10 +13,13 @@ const app = express();
 app.use(express.json());
 app.use(cookieParser());
 
-app.use(cors({
-  origin: process.env.FRONTEND_URL, // <<< PENTING
-  credentials: true
-}));
+// 🔥 FIX CORS (AMAN LOCAL + VERCEL)
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL,
+    credentials: true
+  })
+);
 
 // ===== AUTH =====
 app.post("/register", authController.register);
@@ -34,7 +37,12 @@ app.get("/me", authMiddleware, (req, res) => {
 // ===== USERS =====
 app.use("/users", userRoutes);
 
-// ===== START SERVER =====
+// ===== HEALTH CHECK (OPSIONAL TAPI SANGAT DISARANKAN) =====
+app.get("/", (req, res) => {
+  res.send("Backend Auth API is running 🚀");
+});
+
+// ===== START SERVER (INI KUNCI) =====
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
