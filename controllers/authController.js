@@ -1,8 +1,17 @@
-// controllers/authController.js
 const pool = require("../config/db");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
+// ===== COOKIE OPTIONS (SATU SUMBER KEBENARAN) =====
+const cookieOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production", // true di Railway
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+  maxAge: 24 * 60 * 60 * 1000,
+  path: "/"
+};
+
+// ================= REGISTER =================
 exports.register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -15,33 +24,28 @@ exports.register = async (req, res) => {
     );
 
     const user = result.rows[0];
-    
-    // Buat token untuk auto-login setelah register
+
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
 
-    // Set HTTP-only cookie untuk token
-    res.cookie("auth_token", token, {
-      httpOnly: true, // Tidak bisa diakses JavaScript
-      secure: process.env.NODE_ENV === "production", // HTTPS di production
-      sameSite: "lax", // CSRF protection
-      maxAge: 24 * 60 * 60 * 1000, // 1 hari (dalam milidetik)
-      path: "/" // Available untuk semua route
-    });
+    // Cookie TOKEN
+    res.cookie("auth_token", token, cookieOptions);
 
-    // Cookie biasa untuk role (bisa diakses frontend)
+    // Cookie ROLE (frontend boleh baca)
     res.cookie("user_role", user.role, {
-      maxAge: 24 * 60 * 60 * 1000,
+      secure: cookieOptions.secure,
+      sameSite: cookieOptions.sameSite,
+      maxAge: cookieOptions.maxAge,
       path: "/"
     });
 
-    res.json({ 
-      message: "Register berhasil", 
-      user: user,
-      role: user.role 
+    res.json({
+      message: "Register berhasil",
+      user,
+      role: user.role
     });
 
   } catch (err) {
@@ -50,6 +54,7 @@ exports.register = async (req, res) => {
   }
 };
 
+// ================= LOGIN =================
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -66,7 +71,9 @@ exports.login = async (req, res) => {
     const user = result.rows[0];
 
     const match = await bcrypt.compare(password, user.password);
-    if (!match) return res.status(400).json({ message: "Password salah" });
+    if (!match) {
+      return res.status(400).json({ message: "Password salah" });
+    }
 
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
@@ -74,28 +81,22 @@ exports.login = async (req, res) => {
       { expiresIn: "1d" }
     );
 
-    // Set HTTP-only cookie untuk token
-    res.cookie("auth_token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 24 * 60 * 60 * 1000,
-      path: "/"
-    });
+    res.cookie("auth_token", token, cookieOptions);
 
-    // Cookie biasa untuk role
     res.cookie("user_role", user.role, {
-      maxAge: 24 * 60 * 60 * 1000,
+      secure: cookieOptions.secure,
+      sameSite: cookieOptions.sameSite,
+      maxAge: cookieOptions.maxAge,
       path: "/"
     });
 
-    res.json({ 
-      message: "Login berhasil", 
+    res.json({
+      message: "Login berhasil",
       role: user.role,
-      user: { 
-        id: user.id, 
-        name: user.name, 
-        email: user.email 
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email
       }
     });
 
@@ -104,15 +105,19 @@ exports.login = async (req, res) => {
   }
 };
 
-// TAMBAHKAN fungsi logout
+// ================= LOGOUT =================
 exports.logout = (req, res) => {
-  try {
-    // Hapus cookies
-    res.clearCookie("auth_token");
-    res.clearCookie("user_role");
-    
-    res.json({ message: "Logout berhasil" });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  res.clearCookie("auth_token", {
+    secure: cookieOptions.secure,
+    sameSite: cookieOptions.sameSite,
+    path: "/"
+  });
+
+  res.clearCookie("user_role", {
+    secure: cookieOptions.secure,
+    sameSite: cookieOptions.sameSite,
+    path: "/"
+  });
+
+  res.json({ message: "Logout berhasil" });
 };
