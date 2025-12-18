@@ -22,15 +22,13 @@ app.post("/login", authController.login);
 app.post("/logout", authController.logout);
 
 app.get("/me", authMiddleware, (req, res) => {
-  res.json({
-    user: req.user
-  });
+  res.json({ user: req.user });
 });
 
 app.use("/users", userRoutes);
 
-// 🔥 INI KUNCI
+// 🚨 INI PALING PENTING
 const PORT = process.env.PORT;
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log("Server running on port", PORT);
 });
