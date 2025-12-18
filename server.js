@@ -9,41 +9,28 @@ const userRoutes = require("./routes/userRoutes");
 
 const app = express();
 
-// ===== MIDDLEWARE =====
 app.use(express.json());
 app.use(cookieParser());
 
-// 🔥 FIX CORS (AMAN LOCAL + VERCEL)
-app.use(
-  cors({
-    origin: process.env.FRONTEND_URL,
-    credentials: true
-  })
-);
+app.use(cors({
+  origin: process.env.FRONTEND_URL,
+  credentials: true
+}));
 
-// ===== AUTH =====
 app.post("/register", authController.register);
 app.post("/login", authController.login);
 app.post("/logout", authController.logout);
 
 app.get("/me", authMiddleware, (req, res) => {
   res.json({
-    message: "Data user",
-    user: req.user,
-    role: req.user.role
+    user: req.user
   });
 });
 
-// ===== USERS =====
 app.use("/users", userRoutes);
 
-// ===== HEALTH CHECK (OPSIONAL TAPI SANGAT DISARANKAN) =====
-app.get("/", (req, res) => {
-  res.send("Backend Auth API is running 🚀");
-});
-
-// ===== START SERVER (INI KUNCI) =====
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+// 🔥 INI KUNCI
+const PORT = process.env.PORT;
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on port ${PORT}`);
 });
